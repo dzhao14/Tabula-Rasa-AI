@@ -72,7 +72,7 @@ def rotate_board180(board):
     """
     return board[::-1]
 
-def rotate_boardcc90(board):
+def rotate_cc90(board):
     """
     Returns the board rotated 90 degrees clockwise
     """
@@ -80,3 +80,10 @@ def rotate_boardcc90(board):
     rboard = numpy.array([board[:,0][::-1],board[:,1][::-1],board[:,2][::-1]])
     return rboard
 
+def rotate_ccw90(board):
+    """
+    Returns the board rotated 90 degrees counter clockwise
+    """
+    board = board.reshape((3,3))
+    rboard = numpy.array([board[:,2], board[:,1], board[:,0]])
+    return rboard
