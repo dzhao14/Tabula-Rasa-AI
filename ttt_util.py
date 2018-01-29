@@ -59,5 +59,24 @@ def win(board):
             return "ongoing"
     return 0;
 
+def flip_board(board):
+    """
+    Given a board flip it such that it is viewed with respect to the other
+    player
+    """
+    return numpy.negative(board)
 
+def rotate_board180(board):
+    """
+    Given a board flip it 180 degrees
+    """
+    return board[::-1]
+
+def rotate_boardcc90(board):
+    """
+    Returns the board rotated 90 degrees clockwise
+    """
+    board = board.reshape((3,3))
+    rboard = numpy.array([board[:,0][::-1],board[:,1][::-1],board[:,2][::-1]])
+    return rboard
 
