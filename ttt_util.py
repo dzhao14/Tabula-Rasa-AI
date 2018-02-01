@@ -66,7 +66,7 @@ def flip_board(board):
     """
     return numpy.negative(board)
 
-def rotate_board180(board):
+def rotate_180(board):
     """
     Given a board flip it 180 degrees
     """
