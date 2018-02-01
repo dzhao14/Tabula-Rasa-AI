@@ -78,7 +78,7 @@ def rotate_cc90(board):
     """
     board = board.reshape((3,3))
     rboard = numpy.array([board[:,0][::-1],board[:,1][::-1],board[:,2][::-1]])
-    return rboard
+    return rboard.reshape((9,))
 
 def rotate_ccw90(board):
     """
@@ -86,4 +86,4 @@ def rotate_ccw90(board):
     """
     board = board.reshape((3,3))
     rboard = numpy.array([board[:,2], board[:,1], board[:,0]])
-    return rboard
+    return rboard.reshape((9,))
