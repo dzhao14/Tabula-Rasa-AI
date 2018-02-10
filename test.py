@@ -31,23 +31,30 @@ for i in range(0,25):
     boards = []
     policies = []
     outcomes = []
-    for i in range(0,10):
+    count = 0
+    for i in range(0,50):
         board = np.array([0,0,0,0,0,0,0,0,0])
         while ttt_game.status(board == 2):
-            moves = ttt_game.possible_moves(board, -1)
-            board = random.choice(moves)
-            if ttt_game.status(board) != 2:
-                #ttt_game.print_pretty(board)
-                break
-            board = searcher.findNextMove(board,1)
+
+            board_after_move = searcher.findNextMove(board,1)
             policy = searcher.getTrainingData(board)
-            boards.append(board)
-            policies.append(policy)
+            examples = ttt_game.expandExample(board, policy)
+            boards = boards + examples[0]
+            policies = policies + examples[1]
+            board = board_after_move
+            count = count + 1
             ##print(len(policies))
             #print(policies[-1])
             if ttt_game.status(board) != 2:
                 #ttt_game.print_pretty(board)
                 break
+
+            moves = ttt_game.possible_moves(board, -1)
+            board = random.choice(moves)
+            if ttt_game.status(board) != 2:
+                #ttt_game.print_pretty(board)
+                break
+
 
         status = ttt_game.status(board)
 
@@ -67,12 +74,18 @@ for i in range(0,25):
     policies = np.array(policies)
     outcomes = np.array(outcomes)
 
+    if count % 100000 == 0:
+        import pdb; pdb.set_trace()
+
     print(boards.shape)
     print(policies.shape)
     print(outcomes.shape)
 
-    AI1.train(boards, policies, outcomes)
-    AI2.train(boards, policies, outcomes)
+    try:
+        AI1.train(boards, policies, outcomes)
+        AI2.train(boards, policies, outcomes)
+    except:
+        import pdb; pdb.set_trace()
 
     print( "wins" + str(wins), "losses" + str(losses), "ties" + str(ties))
 

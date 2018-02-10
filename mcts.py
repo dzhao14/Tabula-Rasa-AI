@@ -48,7 +48,6 @@ class MonteCarloTreeSearch:
 
     def uct(self, node):
         assert node.score > -1
-        assert nodeVisit > 0   
         result = self.vanillaUct(node)
         result = result * node.prob * (node.score + 1)
         if (result > 3):
@@ -101,6 +100,7 @@ class MonteCarloTreeSearch:
 
     def simulateRandomPlayout(self,start):
         return self.mod.predict_score(start.state.board)
+
         node = start
         while game.status(node.state.board) == 2:
             possibleStates = node.state.getAllPossibleStates();
@@ -113,7 +113,7 @@ class MonteCarloTreeSearch:
         self.rootNode = tree.root
 
         simulations = 0
-        while simulations < 100:
+        while simulations < 10:
             node = self.selectNode(self.rootNode);
             if game.status(node.state.board) == 2:
                 self.expandNode(node);
