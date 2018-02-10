@@ -3,6 +3,7 @@ from keras.layers import Input, Dense, Conv2D, BatchNormalization, Activation, F
 from keras.models import Model
 from keras.regularizers import l2
 from keras.losses import mean_squared_error, categorical_crossentropy
+from keras import optimizers
 
 import numpy
 
@@ -90,9 +91,11 @@ def createModel(config=None):
     policy_vector = Dense(9, activation="relu")(flat1)
     softmax = Activation('softmax')(policy_vector)
     e = Dense(1)(flat2)
+    e = Activation('tanh')(e)
 
+    opt = keras.optimizers.SGD(lr=0.02)
     model = Model(inputs=[board_input], outputs=[softmax, e, policy_vector])
-    model.compile(optimizer='sgd',
+    model.compile(opt,
             loss = alphazero_loss,
             metrics=['accuracy'])
     return model
@@ -107,19 +110,20 @@ class NN:
     def valid_policy(self, policy, board):
         board_ = board.reshape(9)
         p_moves = possible_move_indexes(board_)
+        if len(p_moves) == 0:
+            return numpy.array([])
         new_policy = []
         for idx in p_moves:
             new_policy.append(policy[idx])
         new_policy = numpy.array(new_policy)
         new_policy = new_policy.astype("float32")
-        return softmax(new_policy)
+        return new_policy
 
     def predict_policy(self, board):
         board_ = board.reshape((1,1,3,3))
         _, __, policy = self.nn.predict(board_)
         policy = policy[0].tolist()
         return self.valid_policy(policy, board_)
-        raise RuntimeError("Make sure you have a layer called before-softmax")
 
     def predict_score(self, board):
         board_ = board.reshape((1,1,3,3))
@@ -137,3 +141,7 @@ class NN:
     def save(self, filename):
         self.nn.save(filename)
 
+a = NN()
+board = numpy.ones(9)
+print(a.predict_policy(board))
+print(a.predict_policy(board))
