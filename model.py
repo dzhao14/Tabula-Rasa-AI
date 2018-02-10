@@ -2,7 +2,7 @@ import keras
 from keras.layers import Input, Dense, Conv2D, BatchNormalization, Activation, Flatten
 from keras.models import Model
 from keras.regularizers import l2
-from keras.losses import mean_squared_error, categorical_crossentropy
+from keras.losses import mean_squared_error, binary_crossentropy
 from keras import optimizers
 
 import numpy
@@ -24,43 +24,45 @@ def alphazero_loss(y_true, y_pred):
     evaluation_true = y_true[1]
     evaluation_pred = y_pred[1]
     return sum((mean_squared_error(evaluation_true, evaluation_pred),
-            categorical_crossentropy(policy_vector_true, policy_vector_pred)))
+            binary_crossentropy(policy_vector_true, policy_vector_pred)))
 
 def createModel(config=None):
     #TODO: add config to make changing hyper params easier
+    kernel_reg = 0.0
+    filters = 5
     board_input = Input(shape=(1,3,3), name="main_input", dtype = 'float32')
 
-    conv1 = Conv2D(1,
+    conv1 = Conv2D(filters,
             kernel_size=(3,3),
             data_format="channels_first",
             padding="same",
-            kernel_regularizer=l2(0.2))(board_input)
+            kernel_regularizer=l2(kernel_reg))(board_input)
 
     bn = BatchNormalization(axis=1)(conv1)
 
     activation = Activation('relu')(bn)
 
-    conv2 = Conv2D(1,
+    conv2 = Conv2D(filters,
             kernel_size=(3,3),
             data_format="channels_first",
             padding="same",
-            kernel_regularizer=l2(0.2))(activation)
+            kernel_regularizer=l2(kernel_reg))(activation)
 
     bn = BatchNormalization(axis=1)(conv2)
 
     activation = Activation('relu')(bn)
 
-    conv1a = Conv2D(1,
+    conv1a = Conv2D(filters,
             kernel_size=(3,3),
             data_format="channels_first",
             padding="same",
-            kernel_regularizer=l2(0.2))(activation)
+            kernel_regularizer=l2(kernel_reg))(activation)
 
-    conv1b = Conv2D(1,
+    conv1b = Conv2D(filters,
             kernel_size=(3,3),
             data_format="channels_first",
             padding="same",
-            kernel_regularizer=l2(0.2))(activation)
+            kernel_regularizer=l2(kernel_reg))(activation)
 
     bn = BatchNormalization(axis=1)(conv1a)
     activation = Activation('relu')(bn)
@@ -68,17 +70,17 @@ def createModel(config=None):
     bn = BatchNormalization(axis=1)(conv1b)
     activation = Activation('relu')(bn)
 
-    conv2a = Conv2D(1,
+    conv2a = Conv2D(filters,
             kernel_size=(3,3),
             data_format="channels_first",
             padding="same",
-            kernel_regularizer=l2(0.2))(activation)
+            kernel_regularizer=l2(kernel_reg))(activation)
 
-    conv2b = Conv2D(1,
+    conv2b = Conv2D(filters,
             kernel_size=(3,3),
             data_format="channels_first",
             padding="same",
-            kernel_regularizer=l2(0.2))(activation)
+            kernel_regularizer=l2(kernel_reg))(activation)
 
     bn = BatchNormalization(axis=1)(conv2a)
     activation = Activation('relu')(bn)
@@ -93,7 +95,7 @@ def createModel(config=None):
     e = Dense(1)(flat2)
     e = Activation('tanh')(e)
 
-    opt = keras.optimizers.SGD(lr=0.002)
+    opt = keras.optimizers.Adam()
     model = Model(inputs=[board_input], outputs=[softmax, e, policy_vector])
     model.compile(opt,
             loss = alphazero_loss,
@@ -137,7 +139,7 @@ class NN:
         Scores are a numpy array with the shape (x)
         """
         self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3)), [policies, scores,
-            policies], epochs = 10)
+            policies], epochs = 5, batch_size = 128)
 
     def save(self, filename):
         self.nn.save(filename)
