@@ -3,8 +3,11 @@ import numpy as np
 import ttt_game
 import sys
 import random
+import model
 
-searcher = mcts.MonteCarloTreeSearch(1,2,3)
+AI1 = model.NN()
+AI2 = model.NN()
+searcher = mcts.MonteCarloTreeSearch(1, 2, AI1, AI2)
 board = np.array([0,0,0,0,0,0,0,0,0])
 """
 print(ttt_game.print_pretty(board))
