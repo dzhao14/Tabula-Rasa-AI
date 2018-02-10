@@ -29,11 +29,12 @@ def alphazero_loss(y_true, y_pred):
 def createModel(config=None):
     #TODO: add config to make changing hyper params easier
     kernel_reg = 0.0
-    filters = 5
+    filters = 100
+    kernel = (3,3)
     board_input = Input(shape=(1,3,3), name="main_input", dtype = 'float32')
 
     conv1 = Conv2D(filters,
-            kernel_size=(3,3),
+            kernel_size=kernel,
             data_format="channels_first",
             padding="same",
             kernel_regularizer=l2(kernel_reg))(board_input)
@@ -43,7 +44,7 @@ def createModel(config=None):
     activation = Activation('relu')(bn)
 
     conv2 = Conv2D(filters,
-            kernel_size=(3,3),
+            kernel_size=kernel,
             data_format="channels_first",
             padding="same",
             kernel_regularizer=l2(kernel_reg))(activation)
@@ -53,13 +54,13 @@ def createModel(config=None):
     activation = Activation('relu')(bn)
 
     conv1a = Conv2D(filters,
-            kernel_size=(3,3),
+            kernel_size=kernel,
             data_format="channels_first",
             padding="same",
             kernel_regularizer=l2(kernel_reg))(activation)
 
     conv1b = Conv2D(filters,
-            kernel_size=(3,3),
+            kernel_size=kernel,
             data_format="channels_first",
             padding="same",
             kernel_regularizer=l2(kernel_reg))(activation)
@@ -71,13 +72,13 @@ def createModel(config=None):
     activation = Activation('relu')(bn)
 
     conv2a = Conv2D(filters,
-            kernel_size=(3,3),
+            kernel_size=kernel,
             data_format="channels_first",
             padding="same",
             kernel_regularizer=l2(kernel_reg))(activation)
 
     conv2b = Conv2D(filters,
-            kernel_size=(3,3),
+            kernel_size=kernel,
             data_format="channels_first",
             padding="same",
             kernel_regularizer=l2(kernel_reg))(activation)
@@ -119,7 +120,7 @@ class NN:
             new_policy.append(policy[idx])
         new_policy = numpy.array(new_policy)
         new_policy = new_policy.astype("float32")
-        return new_policy
+        return softmax(new_policy)
 
     def predict_policy(self, board):
         board_ = board.reshape((1,1,3,3))
