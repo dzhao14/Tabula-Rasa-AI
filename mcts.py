@@ -134,4 +134,5 @@ class MonteCarloTreeSearch:
         policy = numpy.zeros(9)
         for i in range(0, len(possible_moves)):
             policy[possible_moves[i]] = mov_vals[i]
+        return policy
 

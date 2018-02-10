@@ -1,0 +1,24 @@
+winner: 1
+winner: -1
+winner: -1
+winner: 1
+winner: 1
+winner: -1
+winner: -1
+winner: -1
+winner: 1
+winner: -1
+winner: -1
+winner: -1
+winner: -1
+winner: 1
+winner: 1
+winner: -1
+winner: -1
+winner: -1
+winner: -1
+winner: -1
+Epoch 1/1
+
+32/65 [=============>................] - ETA: 0s - loss: 11.1876 - activation_7_loss: 1.8862 - activation_8_loss: 0.0660 - dense_1_loss: 8.4626 - activation_7_acc: 0.1250 - activation_8_acc: 0.2500 - dense_1_acc: 0.1250swig/python detected a memory leak of type 'int64_t *', no destructor found.
+swig/python detected a memory leak of type 'int64_t *', no destructor found.

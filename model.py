@@ -93,7 +93,7 @@ def createModel(config=None):
     e = Dense(1)(flat2)
     e = Activation('tanh')(e)
 
-    opt = keras.optimizers.SGD(lr=0.02)
+    opt = keras.optimizers.SGD(lr=0.002)
     model = Model(inputs=[board_input], outputs=[softmax, e, policy_vector])
     model.compile(opt,
             loss = alphazero_loss,
@@ -136,7 +136,8 @@ class NN:
         Policies are a numpy array with the shape (x, 9)
         Scores are a numpy array with the shape (x)
         """
-        self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3)), [policies, scores, policies])
+        self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3)), [policies, scores,
+            policies], epochs = 10)
 
     def save(self, filename):
         self.nn.save(filename)

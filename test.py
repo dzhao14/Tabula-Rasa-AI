@@ -24,43 +24,57 @@ while ttt_game.status(board == 2):
       break
 """
 
-wins = 0
-losses = 0
-ties = 0
-boards = []
-policies = []
-outcomes = []
-for i in range(0,20):
-    board = np.array([0,0,0,0,0,0,0,0,0])
-    while ttt_game.status(board == 2):
-        moves = ttt_game.possible_moves(board, -1)
-        board = random.choice(moves)
-        if ttt_game.status(board) != 2:
-            ttt_game.print_pretty(board)
-            break
-        board = searcher.findNextMove(board,1)
-        policy = searcher.getTrainingData(board)
-        boards.append(board)
-        policies.append(policy)
-        if ttt_game.status(board) != 2:
-            ttt_game.print_pretty(board)
-            break
-    outcomes.append(np.full(len(boards), ttt_game.status(board)))
+for i in range(0,25):
+    wins = 0
+    losses = 0
+    ties = 0
+    boards = []
+    policies = []
+    outcomes = []
+    for i in range(0,10):
+        board = np.array([0,0,0,0,0,0,0,0,0])
+        while ttt_game.status(board == 2):
+            moves = ttt_game.possible_moves(board, -1)
+            board = random.choice(moves)
+            if ttt_game.status(board) != 2:
+                #ttt_game.print_pretty(board)
+                break
+            board = searcher.findNextMove(board,1)
+            policy = searcher.getTrainingData(board)
+            boards.append(board)
+            policies.append(policy)
+            ##print(len(policies))
+            #print(policies[-1])
+            if ttt_game.status(board) != 2:
+                #ttt_game.print_pretty(board)
+                break
 
-    print("winner: " + str(ttt_game.status(board)))
-    if ttt_game.status(board) == 1:
-        wins = wins + 1
-    if ttt_game.status(board) == -1:
-        losses = losses + 1
-    if ttt_game.status(board) == 0:
-        ties = ties + 1
+        status = ttt_game.status(board)
 
-boards = np.array(boards)
-policies = np.array(policies)
-outcomes = np.array(outcomes)
+        while len(outcomes) < len(boards):
+            outcomes.append(status)
 
-AI1.train(boards, policies, outcomes)
+        print("winner: " + str(ttt_game.status(board)))
+        if ttt_game.status(board) == 1:
+            wins = wins + 1
+        if ttt_game.status(board) == -1:
+            losses = losses + 1
+        if ttt_game.status(board) == 0:
+            ties = ties + 1
 
-print( "wins" + str(wins), "losses" + str(losses), "ties" + str(ties))
+
+    boards = np.array(boards)
+    policies = np.array(policies)
+    outcomes = np.array(outcomes)
+
+    print(boards.shape)
+    print(policies.shape)
+    print(outcomes.shape)
+
+    AI1.train(boards, policies, outcomes)
+    AI2.train(boards, policies, outcomes)
+
+    print( "wins" + str(wins), "losses" + str(losses), "ties" + str(ties))
+
 
 import pdb; pdb.set_trace()
