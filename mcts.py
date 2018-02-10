@@ -2,15 +2,21 @@ import numpy
 import random
 import math
 import ttt_game as game
+import model
 
 class Node:
     """
     A node has a state, a parent, and a possible empty array of children
     """
-    def __init__(self, state, parent):
+    def __init__(self, state, parent, prob):
         self.state = state
         self.parent = parent
         self.childArray = []
+        self.prob = prob
+        if state.playerNo == 1:
+            self.score = self.mod.predict_score(state.board)
+        else:
+            self.score = self.evaluateMove(state.board)
 
     def getRandomChildNode(self):
         return random.choice(self.childArray)
@@ -27,14 +33,15 @@ class State:
         self.winScore = winScore
 
     def getAllPossibleStates(self):
-        return map(lambda bd: State(bd, -self.playerNo, 0, 0),
+        return map(lambda bd: State(bd, -self.playerNo, 1, 1),
                 game.possible_moves(self.board, self.playerNo));
         
 class MonteCarloTreeSearch:
-    def __init__(self, WIN_SCORE, level, opponent):
+    def __init__(self, WIN_SCORE, level, mod, opmod):
         self.WIN_SCORE = WIN_SCORE
         self.level = level
-        self.opponent = opponent
+        self.mod = mod
+        self.opmod = opmod
 
     def selectNode(self, root):
         node = root
@@ -42,16 +49,30 @@ class MonteCarloTreeSearch:
             node = self.findBestNode(node)
         return node
 
-    def uct(self, totalVisit, wins, nodeVisit):
-        if nodeVisit == 0:
-            return 999999
-        return wins / nodeVisit + 1.41 * math.sqrt(math.log(totalVisit) / nodeVisit)
+    def uct(self, totalVisit, node):
+        assert node.score > -1
+        assert nodeVisit > 0   
+        result = node.winScore / node.visitCount + 1.41 * math.sqrt(math.log(totalVisit) /
+                node.visitCount)
+        result = result * node.prob * (node.score + 1)
+        if (result > 3):
+            print( result)
+        return  result
+
+    def evaluateMove(self, board):
+        newboard = game.flip_board(board)
+        move_ind = numpy.argmax(self.opmod.predict_policy(newboard))
+        newboard = game.possible_moves(newboard)[move_ind]
+        newboard = game.flip_board(newboard)
+        return self.mod.predict_score(newboard)
 
     def findBestNode(self, node):
         if node.state.playerNo == -1:
-            return node.getRandomChildNode()
+            newboard = game.flip_board(node.state.board)
+            move_ind = numpy.argmax(self.opmod.predict_policy(newboard))
+            return self.childArray[move_ind]
         parentVisit = node.state.visitCount
-        vals = map(lambda x: self.uct(parentVisit, x.state.winScore, x.state.visitCount),node.childArray);
+        vals = map(lambda nd: self.uct(parentVisit, nd), node.childArray);
         return node.childArray[numpy.argmax(vals)]
 
     def expandNode(self, node):
@@ -69,6 +90,7 @@ class MonteCarloTreeSearch:
             leaf = leaf.parent
 
     def simulateRandomPlayout(self,start):
+        return self.mod.predict_score(start.state.board)
         node = start
         while game.status(node.state.board) == 2:
             possibleStates = node.state.getAllPossibleStates();
@@ -81,7 +103,7 @@ class MonteCarloTreeSearch:
         rootNode = tree.root
 
         simulations = 0
-        while simulations < 7000:
+        while simulations < 10000:
             node = self.selectNode(rootNode);
             if game.status(node.state.board) == 2:
                 self.expandNode(node);
@@ -95,3 +117,12 @@ class MonteCarloTreeSearch:
 
         bestNode = self.findBestNode(rootNode)
         return bestNode.state.board
+
+    def getTrainingData(self, board):
+        possible_moves = numpy.where(board==0)[0]
+        mov_vals = models.softmax(map(self.vanillaUct, node.childArray))
+        policy = numpy.zeros(9)
+        for i in range(0, len(possible_moves)):
+            policy[possible_moves[i]] = mov_vals[i]
+        return policy
+
