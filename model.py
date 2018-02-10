@@ -136,7 +136,7 @@ class NN:
         Policies are a numpy array with the shape (x, 9)
         Scores are a numpy array with the shape (x)
         """
-        self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3), [policies, scores, policies]))
+        self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3)), [policies, scores, policies])
 
     def save(self, filename):
         self.nn.save(filename)
