@@ -27,6 +27,9 @@ while ttt_game.status(board == 2):
 wins = 0
 losses = 0
 ties = 0
+boards = []
+policies = []
+outcomes = []
 for i in range(0,20):
     board = np.array([0,0,0,0,0,0,0,0,0])
     while ttt_game.status(board == 2):
@@ -36,9 +39,14 @@ for i in range(0,20):
             ttt_game.print_pretty(board)
             break
         board = searcher.findNextMove(board,1)
+        policy = searcher.getTrainingData(board)
+        boards.append(board)
+        policies.append(policy)
         if ttt_game.status(board) != 2:
             ttt_game.print_pretty(board)
             break
+    outcomes.append(np.full(len(boards), ttt_game.status(board)))
+
     print("winner: " + str(ttt_game.status(board)))
     if ttt_game.status(board) == 1:
         wins = wins + 1
@@ -46,6 +54,13 @@ for i in range(0,20):
         losses = losses + 1
     if ttt_game.status(board) == 0:
         ties = ties + 1
+
+boards = np.array(boards)
+policies = np.array(policies)
+outcomes = np.array(outcomes)
+
+AI1.train(boards, policies, outcomes)
+
 print( "wins" + str(wins), "losses" + str(losses), "ties" + str(ties))
 
 import pdb; pdb.set_trace()

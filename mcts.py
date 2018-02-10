@@ -8,15 +8,12 @@ class Node:
     """
     A node has a state, a parent, and a possible empty array of children
     """
-    def __init__(self, state, parent, prob):
+    def __init__(self, state, parent, prob, score):
         self.state = state
         self.parent = parent
         self.childArray = []
         self.prob = prob
-        if state.playerNo == 1:
-            self.score = self.mod.predict_score(state.board)
-        else:
-            self.score = self.evaluateMove(state.board)
+        self.score = score
 
     def getRandomChildNode(self):
         return random.choice(self.childArray)
@@ -49,20 +46,23 @@ class MonteCarloTreeSearch:
             node = self.findBestNode(node)
         return node
 
-    def uct(self, totalVisit, node):
+    def uct(self, node):
         assert node.score > -1
         assert nodeVisit > 0   
-        result = node.winScore / node.visitCount + 1.41 * math.sqrt(math.log(totalVisit) /
-                node.visitCount)
+        result = self.vanillaUct(node)
         result = result * node.prob * (node.score + 1)
         if (result > 3):
             print( result)
         return  result
 
+    def vanillaUct(self, node):
+        result = node.state.winScore / node.state.visitCount + 1.41 * math.sqrt(math.log(self.rootNode.state.visitCount) / node.state.visitCount)
+        return  result
+
     def evaluateMove(self, board):
         newboard = game.flip_board(board)
         move_ind = numpy.argmax(self.opmod.predict_policy(newboard))
-        newboard = game.possible_moves(newboard)[move_ind]
+        newboard = game.possible_moves(newboard, 1)[move_ind]
         newboard = game.flip_board(newboard)
         return self.mod.predict_score(newboard)
 
@@ -70,14 +70,24 @@ class MonteCarloTreeSearch:
         if node.state.playerNo == -1:
             newboard = game.flip_board(node.state.board)
             move_ind = numpy.argmax(self.opmod.predict_policy(newboard))
-            return self.childArray[move_ind]
-        parentVisit = node.state.visitCount
-        vals = map(lambda nd: self.uct(parentVisit, nd), node.childArray);
+            return node.childArray[move_ind]
+        vals = map(lambda nd: self.uct(nd), node.childArray);
         return node.childArray[numpy.argmax(vals)]
 
     def expandNode(self, node):
-        possibleStates = node.state.getAllPossibleStates();
-        node.childArray = map(lambda x: Node(x,node), possibleStates)
+        possibleStates = node.state.getAllPossibleStates()
+        policy = self.mod.predict_policy(node.state.board)
+
+        tups = zip(policy,possibleStates)
+
+        score = 0
+
+        if node.state.playerNo == 1:
+            score = self.mod.predict_score(node.state.board)
+        else:
+            score = self.evaluateMove(node.state.board)
+
+        node.childArray = list(map(lambda x: Node(x[1],node, x[0], score), tups))
 
     def backPropogation(self, leaf, win):
         node = leaf
@@ -94,17 +104,17 @@ class MonteCarloTreeSearch:
         node = start
         while game.status(node.state.board) == 2:
             possibleStates = node.state.getAllPossibleStates();
-            node = Node(random.choice(possibleStates),node)
+            node = Node(random.choice(possibleStates),node, 0)
         return game.status(node.state.board)
 
 
     def findNextMove(self, board, playerNo):
-        tree = Tree(Node(State(board, playerNo, 0, 0), "no parent"))
-        rootNode = tree.root
+        tree = Tree(Node(State(board, playerNo, 0, 0), "no parent", 0, 0))
+        self.rootNode = tree.root
 
         simulations = 0
-        while simulations < 10000:
-            node = self.selectNode(rootNode);
+        while simulations < 100:
+            node = self.selectNode(self.rootNode);
             if game.status(node.state.board) == 2:
                 self.expandNode(node);
             exploreNode = node
@@ -115,14 +125,13 @@ class MonteCarloTreeSearch:
             simulations = simulations + 1
 
 
-        bestNode = self.findBestNode(rootNode)
+        bestNode = self.findBestNode(self.rootNode)
         return bestNode.state.board
 
     def getTrainingData(self, board):
         possible_moves = numpy.where(board==0)[0]
-        mov_vals = models.softmax(map(self.vanillaUct, node.childArray))
+        mov_vals = model.softmax(list(map(self.vanillaUct, self.rootNode.childArray)))
         policy = numpy.zeros(9)
         for i in range(0, len(possible_moves)):
             policy[possible_moves[i]] = mov_vals[i]
-        return policy
 
