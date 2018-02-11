@@ -4,11 +4,15 @@ import ttt_game
 import sys
 import random
 import model
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 AI1 = model.NN()
 AI2 = model.NN()
+winrate = []
 searcher = mcts.MonteCarloTreeSearch(1, 2, AI1, AI2)
-board = np.array([0,0,0,0,0,0,0,0,0])
 """
 print(ttt_game.print_pretty(board))
 while ttt_game.status(board == 2):
@@ -24,39 +28,43 @@ while ttt_game.status(board == 2):
       break
 """
 
-for i in range(0,25):
+training_rounds = 25
+games_per_round = 50
+
+for i in range(0,training_rounds):
     wins = 0
     losses = 0
     ties = 0
     boards = []
     policies = []
     outcomes = []
-    count = 0
-    for i in range(0,50):
-        board = np.array([0,0,0,0,0,0,0,0,0])
-        while ttt_game.status(board == 2):
-
-            board_after_move = searcher.findNextMove(board,1)
-            policy = searcher.getTrainingData(board)
-            examples = ttt_game.expandExample(board, policy)
-            boards = boards + examples[0]
-            policies = policies + examples[1]
-            board = board_after_move
-            count = count + 1
-            ##print(len(policies))
-            #print(policies[-1])
-            if ttt_game.status(board) != 2:
-                #ttt_game.print_pretty(board)
-                break
-
-            moves = ttt_game.possible_moves(board, -1)
-            board = random.choice(moves)
-            if ttt_game.status(board) != 2:
-                #ttt_game.print_pretty(board)
-                break
-
+    for i in range(0,games_per_round):
+        board = ttt_game.getStartBoard()
+        turn = 1
+        if random.random() > 0.5:
+            turn = -1
 
         status = ttt_game.status(board)
+        while status == 2:
+
+            if turn == 1:
+                board_after_move = searcher.findNextMove(board,1)
+                policy = searcher.getTrainingData(board)
+                examples = ttt_game.expandExample(board, policy)
+                boards = boards + examples[0]
+                policies = policies + examples[1]
+                board = board_after_move
+                turn = -1
+            else:
+                moves = ttt_game.possible_moves(board, -1)
+                board = random.choice(list(moves))
+                turn = 1
+
+            if ttt_game.status(board) != 2:
+                #ttt_game.print_pretty(board)
+                break
+            status = ttt_game.status(board)
+
 
         while len(outcomes) < len(boards):
             outcomes.append(status)
@@ -68,14 +76,11 @@ for i in range(0,25):
             losses = losses + 1
         if ttt_game.status(board) == 0:
             ties = ties + 1
-
+    winrate.append(wins / (wins + losses + ties))
 
     boards = np.array(boards)
     policies = np.array(policies)
     outcomes = np.array(outcomes)
-
-    if count % 100000 == 0:
-        import pdb; pdb.set_trace()
 
     print(boards.shape)
     print(policies.shape)
@@ -83,11 +88,13 @@ for i in range(0,25):
 
     try:
         AI1.train(boards, policies, outcomes)
-        AI2.train(boards, policies, outcomes)
+        # AI2.train(boards, policies, outcomes)
     except:
         import pdb; pdb.set_trace()
 
     print( "wins" + str(wins), "losses" + str(losses), "ties" + str(ties))
-
+    plt.plot(winrate, 'b')
+    plt.savefig('graph.png');
+    plt.clf()
 
 import pdb; pdb.set_trace()
