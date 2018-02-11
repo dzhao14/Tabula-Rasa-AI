@@ -23,8 +23,7 @@ def alphazero_loss(y_true, y_pred):
     policy_vector_pred = y_pred[0]
     evaluation_true = y_true[1]
     evaluation_pred = y_pred[1]
-    return sum((mean_squared_error(evaluation_true, evaluation_pred),
-            binary_crossentropy(policy_vector_true, policy_vector_pred)))
+    return sum((mean_squared_error(evaluation_true, evaluation_pred), binary_crossentropy(policy_vector_true, policy_vector_pred)))
 
 def createModel(config=None):
     #TODO: add config to make changing hyper params easier

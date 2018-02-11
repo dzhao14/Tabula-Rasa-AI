@@ -23,7 +23,6 @@ model.add(Dense(1))
 opt = keras.optimizers.SGD(lr=LEARNING_RATE)
 model.compile(optimizer=opt, loss='mean_squared_error', metrics=['accuracy'])
 
-
 for i in range(TRAINING_GAMES):
     seen_boards1 = []
     seen_boards2 = []

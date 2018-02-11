@@ -90,16 +90,23 @@ def permutations(board):
         rotate_180(board),
         rotate_cc90(board), 
         rotate_ccw90(board), 
-        flip_board(board),
-        rotate_180(flip_board(board)),
-        rotate_cc90(flip_board(board)),
-        rotate_ccw90(flip_board(board)),
+        mirror_board(board),
+        rotate_180(mirror_board(board)),
+        rotate_cc90(mirror_board(board)),
+        rotate_ccw90(mirror_board(board)),
         ]
+
 
 def expandExample(board, policy):
     return (permutations(board),
             list(map(lambda x: x.reshape(9),
                 permutations(policy.reshape((3,3))))))
+
+def mirror_board(board):
+    """
+    Given a board, find the mirror images
+    """
+    return numpy.flip(board, 0)
 
 def flip_board(board):
     """

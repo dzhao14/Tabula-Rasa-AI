@@ -30,8 +30,8 @@ class State:
         self.winScore = winScore
 
     def getAllPossibleStates(self):
-        return map(lambda bd: State(bd, -self.playerNo, 1, 1),
-                game.possible_moves(self.board, self.playerNo));
+        return list(map(lambda bd: State(bd, -self.playerNo, 1, 1),
+                game.possible_moves(self.board, self.playerNo)));
         
 class MonteCarloTreeSearch:
     def __init__(self, WIN_SCORE, level, mod, opmod):
@@ -100,6 +100,7 @@ class MonteCarloTreeSearch:
             leaf = leaf.parent
 
     def simulateRandomPlayout(self,start):
+
         return self.mod.predict_score(start.state.board)
 
         #node = start

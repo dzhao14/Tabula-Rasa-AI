@@ -86,11 +86,8 @@ for i in range(0,training_rounds):
     print(policies.shape)
     print(outcomes.shape)
 
-    try:
-        AI1.train(boards, policies, outcomes)
-        # AI2.train(boards, policies, outcomes)
-    except:
-        import pdb; pdb.set_trace()
+    AI1.train(boards, policies, outcomes)
+    # AI2.train(boards, policies, outcomes)
 
     print( "wins" + str(wins), "losses" + str(losses), "ties" + str(ties))
     plt.plot(winrate, 'b')
