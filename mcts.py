@@ -50,8 +50,6 @@ class MonteCarloTreeSearch:
         assert node.score > -1
         result = self.vanillaUct(node)
         result = result * node.prob * (node.score + 1)
-        if (result > 3):
-            print( result)
         return  result
 
     def vanillaUct(self, node):
@@ -68,25 +66,26 @@ class MonteCarloTreeSearch:
     def findBestNode(self, node):
         if node.state.playerNo == -1:
             newboard = game.flip_board(node.state.board)
+            op_policy = self.opmod.predict_policy(newboard)
+            assert len(op_policy) == len(node.childArray)
             move_ind = numpy.argmax(self.opmod.predict_policy(newboard))
             return node.childArray[move_ind]
         vals = map(lambda nd: self.uct(nd), node.childArray);
         return node.childArray[numpy.argmax(vals)]
 
     def expandNode(self, node):
+        """Populate this node's children states"""
         possibleStates = node.state.getAllPossibleStates()
         policy = self.mod.predict_policy(node.state.board)
 
-        tups = zip(policy,possibleStates)
+        assert numpy.isclose(policy.sum(), 1)
 
-        score = 0
-
-        if node.state.playerNo == 1:
-            score = self.mod.predict_score(node.state.board)
+        if len(possibleStates) > 0 and possibleStates[0].playerNo == 1:
+            scores = list(map(lambda x: self.mod.predict_score(x.board), possibleStates))
         else:
-            score = self.evaluateMove(node.state.board)
-
-        node.childArray = list(map(lambda x: Node(x[1],node, x[0], score), tups))
+            scores = list(map(lambda x: self.evaluateMove(x.board)
+        tups = zip(policy, possibleStates, scores)
+        node.childArray = list(map(lambda x: Node(x[1],node, x[0], x[2]), tups))
 
     def backPropogation(self, leaf, win):
         node = leaf
@@ -101,11 +100,11 @@ class MonteCarloTreeSearch:
     def simulateRandomPlayout(self,start):
         return self.mod.predict_score(start.state.board)
 
-        node = start
-        while game.status(node.state.board) == 2:
-            possibleStates = node.state.getAllPossibleStates();
-            node = Node(random.choice(possibleStates),node, 0)
-        return game.status(node.state.board)
+        #node = start
+        #while game.status(node.state.board) == 2:
+        #    possibleStates = node.state.getAllPossibleStates();
+        #    node = Node(random.choice(possibleStates),node, 0)
+        #return game.status(node.state.board)
 
 
     def findNextMove(self, board, playerNo):

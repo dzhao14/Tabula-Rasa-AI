@@ -7,6 +7,12 @@ def print_pretty(board):
     board = board.reshape((3,3))
     print(str(board).replace('-1', " O").replace('1', "X").replace('0', ' '))
 
+def make_pretty(board):
+    """
+    Return the tic tac toe board where the 1s are Xs and the -1s are Os
+    """
+    board = board.reshape((3,3))
+    return str(board).replace('-1', " O").replace('1', "X").replace('0', ' ')
 
 def make_move(board, AI, flipped=False):
     """

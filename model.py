@@ -119,7 +119,7 @@ class NN:
             new_policy.append(policy[idx])
         new_policy = numpy.array(new_policy)
         new_policy = new_policy.astype("float32")
-        return new_policy
+        return softmax(new_policy)
 
     def predict_policy(self, board):
         board_ = board.reshape((1,1,3,3))
