@@ -23,7 +23,8 @@ def alphazero_loss(y_true, y_pred):
     policy_vector_pred = y_pred[0]
     evaluation_true = y_true[1]
     evaluation_pred = y_pred[1]
-    return sum((mean_squared_error(evaluation_true, evaluation_pred), binary_crossentropy(policy_vector_true, policy_vector_pred)))
+    return sum((mean_squared_error(evaluation_true, evaluation_pred),
+            mean_squared_error(policy_vector_true, policy_vector_pred)))
 
 def createModel(config=None):
     #TODO: add config to make changing hyper params easier
@@ -95,7 +96,7 @@ def createModel(config=None):
     e = Dense(1)(flat2)
     e = Activation('tanh')(e)
 
-    opt = keras.optimizers.Adam()
+    opt = keras.optimizers.Adam(lr=0.00001)
     model = Model(inputs=[board_input], outputs=[softmax, e, policy_vector])
     model.compile(opt,
             loss = alphazero_loss,
@@ -139,7 +140,7 @@ class NN:
         Scores are a numpy array with the shape (x)
         """
         self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3)), [policies, scores,
-            policies], epochs = 5, batch_size = 128)
+            policies], epochs = 100, batch_size = 128)
 
     def save(self, filename):
         self.nn.save(filename)
