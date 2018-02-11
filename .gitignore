@@ -1,2 +1,6 @@
 *.pyc
 **.un~
+**.swp
+
+graph.png
+nohup.out
