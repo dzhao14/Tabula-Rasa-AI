@@ -58,7 +58,10 @@ class MonteCarloTreeSearch:
 
     def evaluateMove(self, board):
         newboard = game.flip_board(board)
-        move_ind = numpy.argmax(self.opmod.predict_policy(newboard))
+        move_inds = self.opmod.predict_policy(newboard)
+        if len(move_inds) == 0:
+            return self.mod.predict_score(game.flip_board(board))
+        move_ind = numpy.argmax(move_inds)
         newboard = game.possible_moves(newboard, 1)[move_ind]
         newboard = game.flip_board(newboard)
         return self.mod.predict_score(newboard)
@@ -79,11 +82,10 @@ class MonteCarloTreeSearch:
         policy = self.mod.predict_policy(node.state.board)
 
         assert numpy.isclose(policy.sum(), 1)
-
         if len(possibleStates) > 0 and possibleStates[0].playerNo == 1:
             scores = list(map(lambda x: self.mod.predict_score(x.board), possibleStates))
         else:
-            scores = list(map(lambda x: self.evaluateMove(x.board)
+            scores = list(map(lambda x: self.evaluateMove(x.board), possibleStates))
         tups = zip(policy, possibleStates, scores)
         node.childArray = list(map(lambda x: Node(x[1],node, x[0], x[2]), tups))
 
