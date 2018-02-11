@@ -7,6 +7,8 @@ def print_pretty(board):
     board = board.reshape((3,3))
     print(str(board).replace('-1', " O").replace('1', "X").replace('0', ' '))
 
+def getStartBoard():
+    return numpy.array([0,0,0,0,0,0,0,0,0])
 
 def make_move(board, AI, flipped=False):
     """
