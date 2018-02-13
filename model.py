@@ -140,7 +140,7 @@ class NN:
         Scores are a numpy array with the shape (x)
         """
         self.nn.fit(inputs.reshape((len(inputs), 1, 3, 3)), [policies, scores,
-            policies], epochs = 100, batch_size = 128)
+            policies], epochs = 10, batch_size = 128)
 
     def save(self, filename):
         self.nn.save(filename)

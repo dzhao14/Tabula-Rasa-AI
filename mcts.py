@@ -1,7 +1,7 @@
 import numpy
 import random
 import math
-import ttt_game as game
+import c4_game as game
 import model
 
 class Node:
@@ -50,10 +50,18 @@ class MonteCarloTreeSearch:
 
     def findBestNode(self, node):
         if node.state.playerNo == -1:
-            return node.getRandomChildNode()
+            if len(node.childArray) == 0:
+                self.expandNode(node)
+            node = random.choice(node.childArray)
+            return node
         parentVisit = node.state.visitCount
         vals = list(map(lambda x: self.uct(parentVisit, x.state.winScore, x.state.visitCount),node.childArray));
         return node.childArray[numpy.argmax(vals)]
+            # if len(node.childArray) == 0:
+            #     self.expandNode(node)
+            # moveind = numpy.argmax(self.opponent.predict_policy(node.state.board))
+            # return node.childArray[moveind]
+
 
     def expandNode(self, node):
         possibleStates = node.state.getAllPossibleStates();
@@ -71,9 +79,11 @@ class MonteCarloTreeSearch:
 
     def simulateRandomPlayout(self,start):
         node = start
+
         while game.status(node.state.board) == 2:
-            possibleStates = node.state.getAllPossibleStates();
-            node = Node(random.choice(possibleStates),node)
+            if len(node.childArray) == 0:
+                self.expandNode(node)
+            node = random.choice(node.childArray)
         return game.status(node.state.board)
 
 
@@ -82,7 +92,7 @@ class MonteCarloTreeSearch:
         self.rootNode = tree.root
 
         self.simulations = 0
-        while self.simulations < 7000:
+        while self.simulations < 1000:
             node = self.selectNode(self.rootNode);
             if game.status(node.state.board) == 2:
                 self.expandNode(node);
@@ -99,10 +109,11 @@ class MonteCarloTreeSearch:
         return bestNode.state.board
 
     def getTrainingData(self, board):
-        possible_moves = numpy.where(board==0)[0]
-        mov_vals = model.softmax(list(map(lambda x: self.uct(self.simulations,
-            x.state.winScore, x.state.visitCount), self.rootNode.childArray)))
-        policy = numpy.zeros(9)
-        for i in range(0, len(possible_moves)):
-            policy[possible_moves[i]] = mov_vals[i]
-        return policy
+        #possible_moves = numpy.where(board==0)[0]
+        #mov_vals = model.softmax(list(map(lambda x: self.uct(self.simulations,
+        #    x.state.winScore, x.state.visitCount), self.rootNode.childArray)))
+        #policy = numpy.zeros(9)
+        #for i in range(0, len(possible_moves)):
+        #    policy[possible_moves[i]] = mov_vals[i]
+        #return policy
+        return []
