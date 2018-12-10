@@ -4,10 +4,18 @@ class Board(object):
     """Represents a tic-tac-toe board """
 
     def __init__(self, starting_pos = None):
-        if starting_pos:
+        if starting_pos is not None:
             self.board = starting_pos
         else:
             self.board = self.getStartBoard()
+
+    def get_board(self):
+        return np.copy(self.board)
+
+    def get_flipped_board(self):
+        board = np.copy(self.board)
+        board = np.negative(board)
+        return board
 
     def print_pretty(self):
         """
@@ -64,6 +72,15 @@ class Board(object):
             posibilities[i] = new_board
 
         return posibilities
+
+    @staticmethod
+    def get_move_index(board, nextboard):
+        """
+        Given two boards, finds the first index where their values differ
+        """
+        for i in range(9):
+            if board[i] != nextboard[i]:
+                return i
 
     def make_move_index(self, index, x = True):
         """

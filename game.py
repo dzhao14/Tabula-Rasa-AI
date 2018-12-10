@@ -13,8 +13,8 @@ class Game(object):
     acts is always playing an X.
     """
 
-    def __init__(self, starting_pos = None):
-        self.player = 1
+    def __init__(self, starting_pos = None, player = 1):
+        self.player = player
         self.board = Board(starting_pos = starting_pos)
         self.result = None
 
@@ -32,6 +32,19 @@ class Game(object):
         else:
             raise Exception("Can't make move game is already over")
 
+    def make_move_and_copy(self, newboard):
+        newboard = np.negative(newboard)
+        player = self.player * -1
+        if not self.result:
+            game = Game(starting_pos = newboard, player = player)
+            return game
+        else:
+            raise Exception("Can't make move game is already over")
+
+    def make_copy(self):
+        return Game(starting_pos = self.board.get_board(), player = self.player)
+
+
     def check_result(self):
         """
         Check if the game is over.
@@ -42,17 +55,15 @@ class Game(object):
 
         If the game is still on going do not mutate self.result.
         """
-        if not self.result:
+        if self.result is None:
             res = self.board.status()
-            if res == -1:
-                raise Exception("The board is NOT oriented w.r.t to the player")
             if res != 2:
-                self.result = self.player
+                self.result = self.player * res
         else:
             raise Exception("Can't make move game is already over")
 
     def game_over(self):
-        if self.result:
+        if self.result is not None:
             return True
         else:
             return False

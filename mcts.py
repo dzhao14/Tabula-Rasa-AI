@@ -1,7 +1,11 @@
+from board import Board
+from game import Game
 from math import log, sqrt
 import numpy
 import random
 import model
+
+import ipdb
 
 
 class Node(object):
@@ -17,88 +21,153 @@ class Node(object):
         self.is_terminal = self.game.game_over()
          
         self.parent = parent
-        self.childArray = []
+        self.children = None
 
         self.visits = 0
         self.score = 0
-        #self.priorProb = apply f to this board
+        self.prior = 1. #TODO add in the cnn
 
-    def calculate_g(self):
+    def compute_g(self, opponent):
         """
         Calculate the evaluation for going to this node from the parent node
         """
         if self.visits == 0:
             return 999999
+
         #c = log((1 + self.parent.visits + cbase) / cbase) + cinit
         c = 2
         Q = self.score / self.visits
         U = c * self.prior * sqrt(self.parent.visits) / (1 + self.visits)
-        return Q + U
+        if self.parent.game.player == opponent and self.parent is not None:
+            return -Q + U
+        else:
+            return Q + U
+
+    def rollout(self):
+        """
+        Playout the game randomly and return the outcome of the game wrt to the
+        player that started this game
+        """
+        game = self.game.make_copy()
+        while not game.game_over():
+            possible_moves = game.get_possible_moves()
+            random_choice = random.randint(0, len(possible_moves)-1)
+            game.make_move(possible_moves[random_choice])
+
+        return game.result
+
+    def create_children(self):
+        """
+        Create the children nodes from this node
+        """
+        children = []
+        if self.is_terminal:
+            self.children = children
+            return
+        
+        possible_moves = self.game.get_possible_moves()
+        for move in possible_moves:
+            children.append(Node(self, self.game.make_move_and_copy(move)))
+        
+        self.children = children
+
+    def back_prop(self, value):
+        """
+        Update the score and visit stats with the given rollout value
+        """
+        self.visits += 1
+        self.score += value
+        if self.parent:
+            self.parent.back_prop(value)
+
+    def get_next_state(self, opponent):
+        if self.children is None:
+            self.create_children()
+
+        g_vals = list(map(lambda x : x.compute_g(opponent), self.children))
+        if self.game.player == opponent:
+            best_val = float('-inf')
+            best = []
+            for i, gval in enumerate(g_vals):
+                if gval > best_val:
+                    best_val = gval
+                    best = [i]
+                elif gval == best_val:
+                    best.append(i)
+                else:
+                    continue
+
+        else:
+            best_val = -1
+            best = []
+            for i, gval in enumerate(g_vals):
+                if gval > best_val:
+                    best_val = gval
+                    best = [i]
+                elif gval == best_val:
+                    best.append(i)
+                else:
+                    continue
+
+        return self.children[random.choice(best)]
+
+    def create_policy(self):
+        if self.children is None:
+            self.create_children()
+
+        board = self.game.board.get_flipped_board()
+        avg_scores = [-1 for _ in range(9)]
+        for child in self.children:
+            next_board = child.game.board.get_board()
+            move_indx = Board.get_move_index(board, next_board)
+            avg_scores[move_indx] = child.score / child.visits
+
+        min_val = min(avg_scores)
+        avg_scores_shifted = list(map(lambda v : v - min_val, avg_scores))
+        total = sum(avg_scores_shifted)
+        pi = list(map(lambda x : x / total, avg_scores_shifted)) 
+        return pi
+
+    def get_avg_score(self):
+        if self.visits == 0:
+            return 999999
+        else:
+            return self.score / self.visits
 
 
 class MonteCarloTreeSearch:
 
     def __init__(self, game):
         self.root = Node(None, game)
+        self.max_simulations = 1000000
 
-    def selectNode(self, root):
+    def mcts(self):
+        simulations = 1
+        while simulations <= self.max_simulations:
+            node = self.root
+            while node.visits != 0 or node == self.root:
+                node = node.get_next_state()
+            value = node.rollout()
+            node.back_prop(value)
+            simulations += 1
+
+        return self.root.create_policy()
+
+def mcts_debug(game, max_simulations):
+    root = Node(None, game)
+    if root.is_terminal:
+        return [0. for _ in range(9)]
+
+    simulations = 1
+    while simulations <= max_simulations:
         node = root
-        while len(node.childArray) != 0:
-            node = self.findBestNode(node)
-        return node
+        opponent = root.game.player * -1
+        while node.visits != 0 or node == root:
+            node = node.get_next_state(opponent)
+            if node.is_terminal:
+                break
+        value = node.rollout()
+        node.back_prop(value)
+        simulations += 1
 
-    def findBestNode(self, node):
-        if node.state.playerNo == -1:
-            if len(node.childArray) == 0:
-                self.expandNode(node)
-            node = random.choice(node.childArray)
-            return node
-        parentVisit = node.state.visitCount
-        vals = list(map(lambda x: self.uct(parentVisit, x.state.winScore, x.state.visitCount),node.childArray));
-        return node.childArray[numpy.argmax(vals)]
-
-    def expandNode(self, node):
-        possibleStates = node.state.getAllPossibleStates();
-        node.childArray = list(map(lambda x: Node(x,node), possibleStates))
-
-    def backPropogation(self, leaf, win):
-        node = leaf
-        while(leaf != "no parent"):
-            leaf.state.visitCount = leaf.state.visitCount + 1
-            if win == 1:
-                leaf.state.winScore = leaf.state.winScore + 1
-            if win == -1:
-                leaf.state.winScore = leaf.state.winScore - 1
-            leaf = leaf.parent
-
-    def simulateRandomPlayout(self,start):
-        node = start
-
-        while game.status(node.state.board) == 2:
-            if len(node.childArray) == 0:
-                self.expandNode(node)
-            node = random.choice(node.childArray)
-        return game.status(node.state.board)
-
-
-    def findNextMove(self, board, playerNo):
-        tree = Tree(Node(State(board, playerNo, 0, 0), "no parent"))
-        self.rootNode = tree.root
-
-        self.simulations = 0
-        while self.simulations < 1000:
-            node = self.selectNode(self.rootNode);
-            if game.status(node.state.board) == 2:
-                self.expandNode(node);
-            exploreNode = node
-            if len(exploreNode.childArray) > 0:
-                exploreNode = node.getRandomChildNode()
-            playoutResult = self.simulateRandomPlayout(exploreNode)
-            self.backPropogation(exploreNode, playoutResult)
-            self.simulations = self.simulations + 1
-
-        vals = list(map(lambda x: self.uct(self.simulations, x.state.winScore,
-            x.state.visitCount),self.rootNode.childArray));
-        bestNode = self.findBestNode(self.rootNode)
-        return bestNode.state.board
-
+    return root.create_policy(), root
