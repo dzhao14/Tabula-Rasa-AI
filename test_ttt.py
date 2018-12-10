@@ -36,5 +36,5 @@ def test_knows_it_has_won(model):
         ttt_util.print_pretty(ttt_util.rotate_cc90(done_board))
         print(model.predict(ttt_util.rotate_cc90(done_board)))
         ttt_util.print_pretty(ttt_util.rotate_ccw90(done_board))
-        print(model.redict(ttt_util.rotate_ccw90(done_board)))
+        print(model.predict(ttt_util.rotate_ccw90(done_board)))
 

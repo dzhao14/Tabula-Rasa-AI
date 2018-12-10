@@ -1,52 +1,51 @@
+from math import log, sqrt
 import numpy
 import random
-import math
-import c4_game as game
 import model
 
-class Node:
+
+class Node(object):
     """
-    A node has a state, a parent, and a possible empty array of children
+    A state is represented by:
+     - The game which contains the player and board info
+     - The parent to this node
+     - The resulting board position from taking a valid action at this node is 
+     a child node
     """
-    def __init__(self, state, parent):
-        self.state = state
+    def __init__(self, parent, game):
+        self.game = game
+        self.is_terminal = self.game.game_over()
+         
         self.parent = parent
         self.childArray = []
 
-    def getRandomChildNode(self):
-        return random.choice(self.childArray)
+        self.visits = 0
+        self.score = 0
+        #self.priorProb = apply f to this board
 
-class Tree:
-    def __init__(self, root):
-        self.root = root
+    def calculate_g(self):
+        """
+        Calculate the evaluation for going to this node from the parent node
+        """
+        if self.visits == 0:
+            return 999999
+        #c = log((1 + self.parent.visits + cbase) / cbase) + cinit
+        c = 2
+        Q = self.score / self.visits
+        U = c * self.prior * sqrt(self.parent.visits) / (1 + self.visits)
+        return Q + U
 
-class State:
-    def __init__(self, board, playerNo, visitCount, winScore):
-        self.board = board
-        self.playerNo = playerNo
-        self.visitCount = visitCount
-        self.winScore = winScore
 
-    def getAllPossibleStates(self):
-        return list(map(lambda bd: State(bd, -self.playerNo, 0, 0),
-                game.possible_moves(self.board, self.playerNo)));
-        
 class MonteCarloTreeSearch:
-    def __init__(self, WIN_SCORE, level, opponent):
-        self.WIN_SCORE = WIN_SCORE
-        self.level = level
-        self.opponent = opponent
+
+    def __init__(self, game):
+        self.root = Node(None, game)
 
     def selectNode(self, root):
         node = root
         while len(node.childArray) != 0:
             node = self.findBestNode(node)
         return node
-
-    def uct(self, totalVisit, wins, nodeVisit):
-        if nodeVisit == 0:
-            return 999999
-        return wins / nodeVisit + 1.41 * math.sqrt(math.log(totalVisit) / nodeVisit)
 
     def findBestNode(self, node):
         if node.state.playerNo == -1:
@@ -57,11 +56,6 @@ class MonteCarloTreeSearch:
         parentVisit = node.state.visitCount
         vals = list(map(lambda x: self.uct(parentVisit, x.state.winScore, x.state.visitCount),node.childArray));
         return node.childArray[numpy.argmax(vals)]
-            # if len(node.childArray) == 0:
-            #     self.expandNode(node)
-            # moveind = numpy.argmax(self.opponent.predict_policy(node.state.board))
-            # return node.childArray[moveind]
-
 
     def expandNode(self, node):
         possibleStates = node.state.getAllPossibleStates();
@@ -108,12 +102,3 @@ class MonteCarloTreeSearch:
         bestNode = self.findBestNode(self.rootNode)
         return bestNode.state.board
 
-    def getTrainingData(self, board):
-        #possible_moves = numpy.where(board==0)[0]
-        #mov_vals = model.softmax(list(map(lambda x: self.uct(self.simulations,
-        #    x.state.winScore, x.state.visitCount), self.rootNode.childArray)))
-        #policy = numpy.zeros(9)
-        #for i in range(0, len(possible_moves)):
-        #    policy[possible_moves[i]] = mov_vals[i]
-        #return policy
-        return []
