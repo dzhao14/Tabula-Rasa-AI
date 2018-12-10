@@ -23,6 +23,15 @@ class Game(object):
     def get_possible_moves(self):
         return self.board.possible_moves_board()
 
+    def make_move_index(self, index):
+        if not self.result:
+            self.board.make_move_index(index)
+            self.check_result()
+            self.player = self.player * -1
+            self.board.flip_board()
+        else:
+            raise Exception("Can't make move game is already over")
+
     def make_move(self, newboard):
         if not self.result:
             self.board.make_move_board(newboard)
@@ -43,7 +52,6 @@ class Game(object):
 
     def make_copy(self):
         return Game(starting_pos = self.board.get_board(), player = self.player)
-
 
     def check_result(self):
         """
@@ -70,3 +78,4 @@ class Game(object):
 
     def get_result(self):
         return self.result if self.result else 2
+

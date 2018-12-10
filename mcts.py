@@ -3,7 +3,6 @@ from game import Game
 from math import log, sqrt
 import numpy
 import random
-import model
 
 import ipdb
 
@@ -27,7 +26,7 @@ class Node(object):
         self.score = 0
         self.prior = 1. #TODO add in the cnn
 
-    def compute_g(self, opponent):
+    def compute_g(self):
         """
         Calculate the evaluation for going to this node from the parent node
         """
@@ -38,7 +37,7 @@ class Node(object):
         c = 2
         Q = self.score / self.visits
         U = c * self.prior * sqrt(self.parent.visits) / (1 + self.visits)
-        if self.parent.game.player == opponent and self.parent is not None:
+        if self.parent.game.player == -1 and self.parent is not None:
             return -Q + U
         else:
             return Q + U
@@ -80,12 +79,12 @@ class Node(object):
         if self.parent:
             self.parent.back_prop(value)
 
-    def get_next_state(self, opponent):
+    def get_next_state(self):
         if self.children is None:
             self.create_children()
 
-        g_vals = list(map(lambda x : x.compute_g(opponent), self.children))
-        if self.game.player == opponent:
+        g_vals = list(map(lambda x : x.compute_g(), self.children))
+        if self.game.player == -1:
             best_val = float('-inf')
             best = []
             for i, gval in enumerate(g_vals):
@@ -138,15 +137,21 @@ class Node(object):
 class MonteCarloTreeSearch:
 
     def __init__(self, game):
-        self.root = Node(None, game)
-        self.max_simulations = 1000000
+        self.game = game
+        self.max_simulations = 100000
 
     def mcts(self):
+        root = Node(None, self.game.make_copy())
+        assert root.game.player == 1
+        if root.is_terminal:
+            return [0. for _ in range(9)]
         simulations = 1
         while simulations <= self.max_simulations:
-            node = self.root
+            node = root
             while node.visits != 0 or node == self.root:
                 node = node.get_next_state()
+                if node.is_terminal:
+                    break
             value = node.rollout()
             node.back_prop(value)
             simulations += 1
@@ -155,15 +160,15 @@ class MonteCarloTreeSearch:
 
 def mcts_debug(game, max_simulations):
     root = Node(None, game)
+    assert root.game.player == 1
     if root.is_terminal:
         return [0. for _ in range(9)]
 
     simulations = 1
     while simulations <= max_simulations:
         node = root
-        opponent = root.game.player * -1
         while node.visits != 0 or node == root:
-            node = node.get_next_state(opponent)
+            node = node.get_next_state()
             if node.is_terminal:
                 break
         value = node.rollout()

@@ -24,31 +24,9 @@ class Board(object):
         board = self.board.reshape((3,3))
         print(str(board).replace('-1', " O").replace('1', "X").replace('0', ' '))
 
+    @staticmethod
     def getStartBoard(self):
         return np.array([0,0,0,0,0,0,0,0,0])
-
-    def make_move(self, AI):
-        """
-        Given the board state as a (1,9) np array, where a 1 represents the
-        AI's piece, a -1 represents the opponent's piece, and a 0 represents an
-        open space return a (1,9) np array that contains the next move played
-
-        We create all boards where the next move is played (for all possible next
-        moves) and then we evaluate the positions from the opponent's point of view.
-        We then choose the move that results in the worst evaluation for the
-        opponent.
-        """
-        possible_moves = np.where(self.board==0)[0]
-        posibilities = np.zeros((len(possible_moves), 9))
-        for i, move_ind in enumerate(possible_moves):
-            new_board = np.copy(self.board)
-            new_board[move_ind] = 1
-            new_board = np.negative(new_board)
-            posibilities[i] = new_board
-
-        outcomes = AI.predict(posibilities, batch_size = len(posibilities))
-        best_board = np.where(outcomes==np.min(outcomes))[0][0]
-        return (np.negative(posibilities[best_board]), possible_moves[best_board])
 
     def possible_moves_board(self, turn = True):
         """
