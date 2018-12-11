@@ -98,10 +98,8 @@ class AlphaZeroAI(object):
         Perform self play for the given number of games and then update the 
         neural network
         """
-        all_p1_images = []
-        all_p2_images = []
-        all_p1_pi = []
-        all_p2_pi = []
+        all_images = []
+        all_pi = []
         all_labels = []
 
         for i in range(number_games):
@@ -133,7 +131,6 @@ class AlphaZeroAI(object):
                     p1_images_, p1_pi_, p2_images_, p2_pi_ = mcts.get_training_data()
                 else:
                     p2_images_, p2_pi_, p1_images_, p1_pi_ = mcts.get_training_data()
-                assert len(p1_images_) == len(p1_pi_) and len(p2_images_) == len(p2_pi_)
 
                 p1_images += p1_images_
                 p1_pi += p1_pi_
@@ -161,19 +158,16 @@ class AlphaZeroAI(object):
                     labels += [-1. for _ in range(len(p2_images))]
             else:
                 ipdb.set_trace()
+            
+            combined_images = p1_images + p2_images
+            combined_pi = p1_pi + p2_pi
             all_labels += labels
-            all_p1_images += p1_images
-            all_p1_pi += p1_pi
-            all_p2_images += p2_images
-            all_p2_pi += p2_pi
+            all_images += combined_images
+            all_pi += combined_pi
 
 
-        all_p1_images = np.array(all_p1_images)
-        all_p2_images = np.array(all_p2_images)
-        data = np.vstack((all_p1_images, all_p2_images))
-        all_p1_pi = np.array(all_p1_pi)
-        all_p2_pi = np.array(all_p2_pi)
-        policy = np.vstack((all_p1_pi, all_p2_pi))
+        data = np.array(all_images)
+        policy = np.array(all_pi)
         labels = np.array(all_labels)
 
         self.model.train(data, policy, labels)
