@@ -42,9 +42,11 @@ def createModel(config=None):
 
     opt = keras.optimizers.Adam()
     model = Model(inputs=[board_input], outputs=[softmax, e])
-    model.compile(opt,
-            loss = ['binary_crossentropy', 'mean_squared_error'],
-            metrics=['accuracy'])
+    model.compile(
+            opt,
+            loss = ['categorical_crossentropy', 'mean_squared_error'],
+            metrics=['accuracy'],
+            )
     return model
 
 class NN:

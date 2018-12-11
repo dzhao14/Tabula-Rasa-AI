@@ -39,9 +39,10 @@ class Node(object):
             return UNSEEN_SCORE
         
         if self.model is not None:
-            cbase = 2
-            cinit = 2
-            c = log((1 + self.parent.visits + cbase) / cbase) + cinit
+            #cbase = 2
+            #cinit = 20
+            #c = log((1 + self.parent.visits + cbase) / cbase) + cinit
+            c = 2
         else:
             c = 2
         Q = self.score / self.visits
@@ -82,7 +83,11 @@ class Node(object):
         possible_moves = self.game.get_possible_moves()
         for move in possible_moves:
             move_indx = Board.get_move_index(board, move)
-            child = Node(self, self.game.make_move_and_copy(move))
+            child = Node(
+                    self,
+                    self.game.make_move_and_copy(move),
+                    model=self.model,
+                    )
             if p is not None:
                 child.set_prior(p[move_indx])
             children.append(child)
