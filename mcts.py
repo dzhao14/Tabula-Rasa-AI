@@ -1,7 +1,7 @@
 from board import Board
 from game import Game
 from math import log, sqrt
-import numpy
+import numpy as np
 import random
 
 import ipdb
@@ -120,6 +120,8 @@ class Node(object):
             next_board = child.game.board.get_board()
             move_indx = Board.get_move_index(board, next_board)
             avg_scores[move_indx] = child.score / child.visits
+            if self.game.player == -1:
+                avg_scores[move_indx] *= -1
 
         min_val = min(avg_scores)
         avg_scores_shifted = list(map(lambda v : v - min_val, avg_scores))
@@ -138,17 +140,22 @@ class MonteCarloTreeSearch:
 
     def __init__(self, game):
         self.game = game
-        self.max_simulations = 100000
+        self.max_simulations = 1000
+        self.p1_images = []
+        self.p2_images = []
+        self.p1_pi = []
+        self.p2_pi = []
 
     def mcts(self):
         root = Node(None, self.game.make_copy())
         assert root.game.player == 1
         if root.is_terminal:
             return [0. for _ in range(9)]
+        
         simulations = 1
         while simulations <= self.max_simulations:
             node = root
-            while node.visits != 0 or node == self.root:
+            while node.visits != 0 or node == root:
                 node = node.get_next_state()
                 if node.is_terminal:
                     break
@@ -156,7 +163,36 @@ class MonteCarloTreeSearch:
             node.back_prop(value)
             simulations += 1
 
-        return self.root.create_policy()
+        self.clear_training_data()
+        self.store_training_data(root)
+
+        return root.create_policy()
+
+    def clear_training_data(self):
+        self.p1_images = []
+        self.p2_images = []
+        self.p1_pi = []
+        self.p2_pi = []
+
+    def store_training_data(self, node):
+        """
+        For each node with more than X visits store the board state and computed
+        policy vector
+        """
+        if node.visits >= 100 and not node.game.game_over():
+            pi = node.create_policy()
+            if node.game.player == 1:
+                self.p1_images.append(node.game.board.get_board())
+                self.p1_pi.append(np.array(pi))
+            else:
+                self.p2_images.append(node.game.board.get_board())
+                self.p2_pi.append(np.array(pi))
+            for child in node.children:
+                self.store_training_data(child)
+
+    def get_training_data(self):
+        return self.p1_images, self.p1_pi, self.p2_images, self.p2_pi
+         
 
 def mcts_debug(game, max_simulations):
     root = Node(None, game)

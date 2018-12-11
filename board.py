@@ -7,7 +7,7 @@ class Board(object):
         if starting_pos is not None:
             self.board = starting_pos
         else:
-            self.board = self.getStartBoard()
+            self.board = Board.getStartBoard()
 
     def get_board(self):
         return np.copy(self.board)
@@ -25,7 +25,7 @@ class Board(object):
         print(str(board).replace('-1', " O").replace('1', "X").replace('0', ' '))
 
     @staticmethod
-    def getStartBoard(self):
+    def getStartBoard():
         return np.array([0,0,0,0,0,0,0,0,0])
 
     def possible_moves_board(self, turn = True):
