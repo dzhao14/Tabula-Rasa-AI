@@ -130,11 +130,6 @@ class Board(object):
             rotate_ccw90(mirror_board(board)),
             ]
 
-    def expandExample(self, policy):
-        return (self.permutations(),
-                list(map(lambda x: x.reshape(9),
-                    self.permutations(policy.reshape((3,3))))))
-
     def mirror_board(self):
         """
         Given a board, find the mirror images
@@ -175,3 +170,17 @@ class Board(object):
         board = board.reshape((3,3))
         rboard = np.array([board[:,2], board[:,1], board[:,0]])
         return rboard.reshape((9,))
+
+class C4Board(object):
+
+    def __init__(self, starting_pos = None):
+        if starting_pos is not None:
+            self.board = starting_pos
+        else:
+            self.board = Board.getStartBoard()
+
+    @staticmethod
+    def getStartBoard():
+        return np.zeros(shape=(6,7))
+
+

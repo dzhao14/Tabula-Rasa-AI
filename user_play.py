@@ -4,8 +4,9 @@ from board import Board
 import numpy as np
 import random
 
-import ipdb
 
+print ("How many iterations can the mcts AI think for?")
+iters = int(input())
 print ("Hit 1 if you want to go first or 2 if you want to go second")
 turn = int(input())
 
@@ -19,7 +20,7 @@ while not g.game_over():
         ind = int(input())
         g.make_move_index(ind)
     else:
-        mcts = MonteCarloTreeSearch(g)
+        mcts = MonteCarloTreeSearch(g, simulations = iters)
         pi = mcts.mcts()
         best_prob = 0
         best_moves = []
@@ -31,11 +32,7 @@ while not g.game_over():
                 best_moves.append(i)
             else:
                 continue
-        p1_images, p1_pi, p2_images, p2_pi = mcts.get_training_data()
-        for i in range(len(p2_images)):
-            b = Board(starting_pos = p2_images[i])
-            b.print_pretty()
-            print (p2_pi[i])
+
         g.make_move_index(random.choice(best_moves))
     user = not user
 
