@@ -1,4 +1,4 @@
-from board import Board
+from board import Board, permute
 from game import Game
 from math import log, sqrt
 import numpy as np
@@ -39,10 +39,9 @@ class Node(object):
             return UNSEEN_SCORE
         
         if self.model is not None:
-            #cbase = 2
-            #cinit = 20
-            #c = log((1 + self.parent.visits + cbase) / cbase) + cinit
-            c = 2
+            cbase = 19652
+            cinit = 1.25
+            c = log((1 + self.parent.visits + cbase) / cbase) + cinit
         else:
             c = 2
         Q = self.score / self.visits
@@ -57,13 +56,18 @@ class Node(object):
         Playout the game randomly and return the outcome of the game wrt to the
         player that started this game
         """
-        game = self.game.make_copy()
-        while not game.game_over():
-            possible_moves = game.get_possible_moves()
-            random_choice = random.randint(0, len(possible_moves)-1)
-            game.make_move(possible_moves[random_choice])
+        if self.model is None:
+            game = self.game.make_copy()
+            while not game.game_over():
+                possible_moves = game.get_possible_moves()
+                random_choice = random.randint(0, len(possible_moves)-1)
+                game.make_move(possible_moves[random_choice])
 
-        return game.result
+            return game.result
+
+        else:
+            score = self.model.predict_score(self.game.board)
+            return self.game.player * score
 
     def create_children(self):
         """
@@ -74,21 +78,22 @@ class Node(object):
             self.children = children
             return
         
-        p = None
-        nn_prob = []
+        possible_moves = self.game.get_possible_moves()
+
         if self.model is not None:
             p = self.model.predict_policy(self.game.board)
+            p = self.model.validate_policy(self.game.board, p)
+            noise = np.random.gamma(0.3, 1, len(p))
+            for i, prob in enumerate(p):
+                p[i] = 0.75 * prob + 0.25 + noise[i]
 
-        board = self.game.board.get_flipped_board()
-        possible_moves = self.game.get_possible_moves()
-        for move in possible_moves:
-            move_indx = Board.get_move_index(board, move)
+        for move_indx, move in enumerate(possible_moves):
             child = Node(
                     self,
                     self.game.make_move_and_copy(move),
                     model=self.model,
                     )
-            if p is not None:
+            if self.model is not None:
                 child.set_prior(p[move_indx])
             children.append(child)
         
@@ -174,21 +179,19 @@ class Node(object):
 
 class MonteCarloTreeSearch:
 
-    def __init__(self, game, simulations = None, model = None):
-        self.game = game
+    def __init__(self, simulations = None, model = None):
         if simulations is None:
             self.max_simulations = 10000
         else:
             self.max_simulations = simulations
         self.model = model
-        self.p1_images = []
-        self.p2_images = []
-        self.p1_pi = []
-        self.p2_pi = []
 
-    def mcts(self):
-        root = Node(None, self.game.make_copy(), model = self.model)
-        assert root.game.player == 1
+        self.images = []
+        self.pi = []
+
+    def mcts(self, game):
+        game.player = 1
+        root = Node(None, game.make_copy(), model = self.model)
         if root.is_terminal:
             return [0. for _ in range(9)]
         
@@ -209,46 +212,20 @@ class MonteCarloTreeSearch:
         return root.create_policy()
 
     def clear_training_data(self):
-        self.p1_images = []
-        self.p2_images = []
-        self.p1_pi = []
-        self.p2_pi = []
+        self.images = []
+        self.pi = []
 
     def store_training_data(self, node):
         """
         For each node with more than X visits store the board state and computed
         policy vector
         """
-        if node.visits >= self.max_simulations // 10 and not node.game.game_over():
-            pi = node.create_policy()
-            if node.game.player == 1:
-                self.p1_images.append(node.game.board.get_board())
-                self.p1_pi.append(np.array(pi))
-            else:
-                self.p2_images.append(node.game.board.get_board())
-                self.p2_pi.append(np.array(pi))
-            for child in node.children:
-                self.store_training_data(child)
+        images = permute(node.game.board.get_board())
+        pi = permute(np.array(node.create_policy()))
+
+        self.images += images
+        self.pi += pi
 
     def get_training_data(self):
-        return self.p1_images, self.p1_pi, self.p2_images, self.p2_pi
+        return self.images, self.pi,
          
-
-def mcts_debug(game, max_simulations):
-    root = Node(None, game)
-    assert root.game.player == 1
-    if root.is_terminal:
-        return [0. for _ in range(9)]
-
-    simulations = 1
-    while simulations <= max_simulations:
-        node = root
-        while node.visits != 0 or node == root:
-            node = node.get_next_state()
-            if node.is_terminal:
-                break
-        value = node.rollout()
-        node.back_prop(value)
-        simulations += 1
-
-    return root.create_policy(), root

@@ -17,9 +17,12 @@ alpha_iters = int(input())
 print("number of iterations the vanilla mcts can search for")
 vanilla_iters = int(input())
 
-vanilla = 0
-alphazero = 0
+vanilla_score = 0
+alphazero_score = 0
 total = 0
+
+alphazero = MonteCarloTreeSearch(simulations = alpha_iters)
+mcts = MonteCarloTreeSearch(simulations = vanilla_iters)
 
 for i in range(2*games):
     if i >= games:
@@ -29,8 +32,7 @@ for i in range(2*games):
     g = game.Game()
     while not g.game_over():
         if v:
-            mcts = MonteCarloTreeSearch(g, simulations = vanilla_iters)
-            pi = mcts.mcts()
+            pi = mcts.mcts(g)
             best_prob = 0
             best_moves = []
             for i, prob in enumerate(pi):
@@ -42,8 +44,7 @@ for i in range(2*games):
                 else:
                     continue
         else:
-            mcts = MonteCarloTreeSearch(g, simulations = alpha_iters, model = m)
-            pi = mcts.mcts()
+            pi = alphazero.mcts(g)
             best_prob = 0
             best_moves = []
             for i, prob in enumerate(pi):
@@ -58,19 +59,18 @@ for i in range(2*games):
         g.make_move_index(random.choice(best_moves))
 
         v = not v
-        g.player = 1
 
     g.board.print_pretty()
     if v and g.result != 0:
-        alphazero += 1
+        alphazero_score += 1
 
     if not v and g.result != 0:
-        vanilla += 1
+        vanilla_score += 1
 
     total+=1
 
 print("---Stats---")
-print("alpha zero winrate: {}".format(alphazero / total))
-print("vanilla winrate: {}".format(vanilla / total))
-print("draw rate: {}".format((total - alphazero - vanilla) / total)) 
+print("alpha zero winrate: {}".format(alphazero_score / total))
+print("vanilla winrate: {}".format(vanilla_score / total))
+print("draw rate: {}".format((total - alphazero_score - vanilla_score) / total)) 
 

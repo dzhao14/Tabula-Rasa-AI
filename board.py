@@ -51,6 +51,9 @@ class Board(object):
 
         return posibilities
 
+    def get_valid_move_index(self):
+        return np.where(self.board==0)[0]
+
     @staticmethod
     def get_move_index(board, nextboard):
         """
@@ -117,26 +120,6 @@ class Board(object):
                 return 2
         return 0;
 
-    def permute(self):
-        board = np.copy(self.board)
-        return[
-            board, 
-            rotate_180(board),
-            rotate_cc90(board), 
-            rotate_ccw90(board), 
-            mirror_board(board),
-            rotate_180(mirror_board(board)),
-            rotate_cc90(mirror_board(board)),
-            rotate_ccw90(mirror_board(board)),
-            ]
-
-    def mirror_board(self):
-        """
-        Given a board, find the mirror images
-        """
-        board = np.copy(self.board)
-        return np.flip(board, 0)
-
     def flip_board(self):
         """
         Given a board flip it such that it is viewed with respect to the other
@@ -146,30 +129,49 @@ class Board(object):
         board = np.negative(board)
         self.board = board
 
-    def rotate_180(self):
-        """
-        Given a board rotate it 180 degrees
-        """
-        board = np.copy(self.board)
-        return board[::-1]
 
-    def rotate_cc90(self):
-        """
-        Returns the board rotated 90 degrees clockwise
-        """
-        board = np.copy(self.board)
-        board = board.reshape((3,3))
-        rboard = np.array([board[:,0][::-1],board[:,1][::-1],board[:,2][::-1]])
-        return rboard.reshape((9,))
 
-    def rotate_ccw90(self):
-        """
-        Returns the board rotated 90 degrees counter clockwise
-        """
-        board = np.copy(self.board)
-        board = board.reshape((3,3))
-        rboard = np.array([board[:,2], board[:,1], board[:,0]])
-        return rboard.reshape((9,))
+def permute(board):
+    return[
+        board,
+        rotate_180(board), rotate_cc90(board), 
+        rotate_ccw90(board), 
+        mirror_board(board),
+        mirror_board(rotate_180(board)),
+        mirror_board(rotate_cc90(board)),
+        mirror_board(rotate_ccw90(board)),
+        ]
+
+def mirror_board(board):
+    """
+    Given a board, find the mirror images
+    """
+    board = board.reshape((3,3))
+    return np.flip(board, 1).reshape((9,))
+
+def rotate_180(board):
+    """
+    Given a board rotate it 180 degrees
+    """
+    board = board.reshape((3,3))
+    return board[::-1].reshape((9,))
+
+def rotate_cc90(board):
+    """
+    Returns the board rotated 90 degrees clockwise
+    """
+    board = board.reshape((3,3))
+    rboard = np.array([board[:,0][::-1],board[:,1][::-1],board[:,2][::-1]])
+    return rboard.reshape((9,))
+
+def rotate_ccw90(board):
+    """
+    Returns the board rotated 90 degrees counter clockwise
+    """
+    board = board.reshape((3,3))
+    rboard = np.array([board[:,2], board[:,1], board[:,0]])
+    return rboard.reshape((9,))
+
 
 class C4Board(object):
 

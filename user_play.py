@@ -13,6 +13,7 @@ turn = int(input())
 
 user = True if turn == 1 else False
 g = game.Game(player = -1) if turn == 1 else game.Game()
+mcts = MonteCarloTreeSearch(simulations = iters)
 
 while not g.game_over():
     if user:
@@ -20,8 +21,7 @@ while not g.game_over():
         ind = int(input())
         g.make_move_index(ind)
     else:
-        mcts = MonteCarloTreeSearch(g, simulations = iters)
-        pi = mcts.mcts()
+        pi = mcts.mcts(g)
         best_prob = 0
         best_moves = []
         for i, prob in enumerate(pi):
