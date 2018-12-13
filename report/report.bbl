@@ -1,0 +1,31 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Browne \bgroup et al\mbox.\egroup
+  }{2012}]{Browne12asurvey}
+Browne, C.; Powley, E.; Whitehouse, D.; Lucas, S.; Cowling, P.~I.; Tavener, S.;
+  Perez, D.; Samothrakis, S.; Colton, S.; and et~al.
+\newblock 2012.
+\newblock A survey of monte carlo tree search methods.
+\newblock {\em IEEE TRANSACTIONS ON COMPUTATIONAL INTELLIGENCE AND AI}.
+
+\bibitem[\protect\citeauthoryear{{Silver} \bgroup et al\mbox.\egroup
+  }{2017}]{2017arXiv171201815S}
+{Silver}, D.; {Hubert}, T.; {Schrittwieser}, J.; {Antonoglou}, I.; {Lai}, M.;
+  {Guez}, A.; {Lanctot}, M.; {Sifre}, L.; {Kumaran}, D.; {Graepel}, T.;
+  {Lillicrap}, T.; {Simonyan}, K.; and {Hassabis}, D.
+\newblock 2017.
+\newblock {Mastering Chess and Shogi by Self-Play with a General Reinforcement
+  Learning Algorithm}.
+\newblock {\em ArXiv e-prints}.
+
+\bibitem[\protect\citeauthoryear{Silver \bgroup et al\mbox.\egroup
+  }{2018}]{Silver1140}
+Silver, D.; Hubert, T.; Schrittwieser, J.; Antonoglou, I.; Lai, M.; Guez, A.;
+  Lanctot, M.; Sifre, L.; Kumaran, D.; Graepel, T.; Lillicrap, T.; Simonyan,
+  K.; and Hassabis, D.
+\newblock 2018.
+\newblock A general reinforcement learning algorithm that masters chess, shogi,
+  and go through self-play.
+\newblock {\em Science} 362(6419):1140--1144.
+
+\end{thebibliography}

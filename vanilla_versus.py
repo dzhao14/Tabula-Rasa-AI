@@ -7,13 +7,8 @@ import model
 
 import ipdb
 
-print ("type the filename of the model you want to use")
-model_name = input()
-m = model.NN(existing = model_name) 
 print ("type the number of games each AI should play going first")
 games = int(input())
-print ("number of iterations alphazero can search for")
-alpha_iters = int(input())
 print("number of iterations the vanilla mcts can search for")
 vanilla_iters = int(input())
 
@@ -21,7 +16,7 @@ vanilla_score = 0
 alphazero_score = 0
 total = 0
 
-alphazero = MonteCarloTreeSearch(simulations = alpha_iters, model = m)
+alphazero = MonteCarloTreeSearch(simulations = vanilla_iters)
 mcts = MonteCarloTreeSearch(simulations = vanilla_iters)
 
 for i in range(2*games):

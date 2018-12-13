@@ -1,3 +1,8 @@
+import numpy as np                                                              
+import plotly.plotly as py                                                      
+import plotly.graph_objs as go                                                  
+import plotly.offline as offline
+
 f = open('da', 'r')
 
 lines = f.readlines() 
@@ -12,4 +17,27 @@ for line in lines2:
     v = sections[1].split()
     vals.append(float(v[1]))
 
-import ipdb; ipdb.set_trace()
+
+layout = go.Layout(                                                         
+        title="Training Loss",                                            
+        yaxis=dict(                                                         
+            title="Loss",                                                
+            ),                                                              
+        xaxis=dict(                                                         
+            title="Training Games",                                              
+            ),                                                              
+        ) 
+
+trace0 = go.Scatter(
+        x=[i for i in range(len(vals))],
+        y=vals,
+        mode='lines',
+        name="Training loss",
+        )
+
+fig = go.Figure(data=[trace0], layout=layout)
+offline.plot(
+        fig,
+        image='png',
+        filename="training_loss",
+        )
