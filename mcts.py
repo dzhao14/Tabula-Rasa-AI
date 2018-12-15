@@ -1,6 +1,6 @@
 from board import Board, permute
 from game import Game
-from math import log, sqrt
+from math import log, sqrt, exp
 import numpy as np
 import random
 
@@ -13,13 +13,13 @@ class Node(object):
     A state is represented by:
      - The game which contains the player and board info
      - The parent to this node
-     - The resulting board position from taking a valid action at this node is 
+     - The resulting board position from taking a valid action at this node is
      a child node
     """
     def __init__(self, parent, game, model = None):
         self.game = game
         self.is_terminal = self.game.game_over()
-         
+
         self.parent = parent
         self.children = None
 
@@ -28,8 +28,13 @@ class Node(object):
         self.model = model
         self.prior = 1.
 
+        self.noise = False
+
     def set_prior(self, prior):
         self.prior = prior
+
+    def use_noise(self):
+        self.noise = True
 
     def compute_g(self):
         """
@@ -37,7 +42,7 @@ class Node(object):
         """
         if self.visits == 0:
             return UNSEEN_SCORE
-        
+
         if self.model is not None:
             cbase = 19652
             cinit = 1.25
@@ -77,26 +82,29 @@ class Node(object):
         if self.is_terminal:
             self.children = children
             return
-        
+
         possible_moves = self.game.get_possible_moves()
+        move_indexes = self.game.get_possible_move_indexes()
+        self.children_index = move_indexes
 
         if self.model is not None:
             p = self.model.predict_policy(self.game.board)
             p = self.model.validate_policy(self.game.board, p)
-            noise = np.random.gamma(0.3, 1, len(p))
-            for i, prob in enumerate(p):
-                p[i] = 0.75 * prob + 0.25 + noise[i]
+            if self.noise:
+                noise = np.random.gamma(0.3, 1, len(p))
+                for i, prob in enumerate(p):
+                    p[i] = 0.75 * prob + 0.25 + noise[i]
 
-        for move_indx, move in enumerate(possible_moves):
+        for i, move in enumerate(possible_moves):
             child = Node(
                     self,
                     self.game.make_move_and_copy(move),
                     model=self.model,
                     )
             if self.model is not None:
-                child.set_prior(p[move_indx])
+                child.set_prior(p[i])
             children.append(child)
-        
+
         self.children = children
 
     def back_prop(self, value):
@@ -115,58 +123,32 @@ class Node(object):
         g_vals = list(map(lambda x : x.compute_g(), self.children))
         if self.game.player == -1:
             best_val = float('-inf')
-            best = []
-            for i, gval in enumerate(g_vals):
-                if gval > best_val:
-                    best_val = gval
-                    best = [i]
-                elif gval == best_val:
-                    best.append(i)
-                else:
-                    continue
-
         else:
             best_val = -1
-            best = []
-            for i, gval in enumerate(g_vals):
-                if gval > best_val:
-                    best_val = gval
-                    best = [i]
-                elif gval == best_val:
-                    best.append(i)
-                else:
-                    continue
+
+        best = []
+        for i, gval in enumerate(g_vals):
+            if gval > best_val:
+                best_val = gval
+                best = [i]
+            elif gval == best_val:
+                best.append(i)
+            else:
+                continue
 
         return self.children[random.choice(best)]
 
     def create_policy(self):
-        if self.children is None:
-            self.create_children()
-
-        board = self.game.board.get_flipped_board()
-        avg_scores = [-1 for _ in range(9)]
+        avg_scores = []
         for child in self.children:
-            next_board = child.game.board.get_board()
-            move_indx = Board.get_move_index(board, next_board)
-            avg_scores[move_indx] = child.score / child.visits
-            if self.game.player == -1:
-                avg_scores[move_indx] *= -1
+            avg_scores.append(child.score / child.visits)
+        avg_scores = list(map(lambda x : exp(x), avg_scores))
+        avg_sum = sum(avg_scores)
+        avg_scores = list(map(lambda x : x / avg_sum, avg_scores))
 
-        min_val = min(avg_scores)
-        avg_scores_shifted = list(map(lambda v : v - min_val, avg_scores))
-        total = sum(avg_scores_shifted)
-        if total == 0:
-            return self.create_uniform_policy()
-        pi = list(map(lambda x : x / total, avg_scores_shifted)) 
-        return pi
-
-    def create_uniform_policy(self):
-        pi = [0 for i in range(9)]
-        board = self.game.board.get_flipped_board()
-        for child in self.children:
-            next_board = child.game.board.get_board()
-            move_indx = Board.get_move_index(board, next_board)
-            pi[move_indx] = 1. / len(self.children)
+        pi = [0 for _ in range(9)]
+        for i, move_indx in enumerate(self.children_index):
+            pi[move_indx] = avg_scores[i]
 
         return pi
 
@@ -194,7 +176,7 @@ class MonteCarloTreeSearch:
         root = Node(None, game.make_copy(), model = self.model)
         if root.is_terminal:
             return [0. for _ in range(9)]
-        
+
         simulations = 1
         while simulations <= self.max_simulations:
             node = root
@@ -228,4 +210,4 @@ class MonteCarloTreeSearch:
 
     def get_training_data(self):
         return self.images, self.pi,
-         
+

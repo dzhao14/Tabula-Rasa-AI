@@ -23,6 +23,9 @@ class Game(object):
     def get_possible_moves(self):
         return self.board.possible_moves_board()
 
+    def get_possible_move_indexes(self):
+        return self.board.get_valid_move_index()
+
     def make_move_index(self, index):
         if not self.result:
             self.board.make_move_index(index)

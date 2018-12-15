@@ -12,12 +12,6 @@ import game
 
 import ipdb
 
-def softmax(x):
-    """Calucate the softmax of a vector"""
-    e_x = numpy.exp(x - numpy.max(x))
-    out = e_x / e_x.sum()
-    return out
-
 def createModel(config=None):
 
     board_input = Input(shape=(9,), name="main_input", dtype = 'float32')
@@ -111,5 +105,5 @@ class NN:
                 )
 
     def save(self, filename):
-        self.nn.save(filename)
+        self.nn.save('models/{}'.format(filename))
 
